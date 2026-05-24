@@ -45,6 +45,9 @@ export default function Home() {
     updated[index] = { ...updated[index], [field]: value };
     setTools(updated);
   };
+   const handleDownloadReport = () => {
+    window.print();
+  };
 
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100 p-8 font-sans">
