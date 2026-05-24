@@ -1,277 +1,183 @@
 'use client';
 
-import React, { useState } from 'react';
-
-interface ToolAllocation {
-  tier: string;
-  seats: number;
-  cost: number;
-}
-
-interface Allocations {
-  cursor: ToolAllocation;
-  claude: ToolAllocation;
-  chatgpt: ToolAllocation;
-  windsurf: ToolAllocation;
-}
-
-interface AuditRecommendation {
-  toolId: string;
-  title: string;
-  savings: number;
-  reason: string;
-}
-
-interface AuditResult {
-  monthlySavings: number;
-  annualSavings: number;
-  recommendations: AuditRecommendation[];
-}
+import { useState, useEffect } from 'react';
+import { runAuditEngine, ToolInput, AuditSummary } from './pricingRules';
 
 export default function Home() {
-  // Matches initial state from layout screens
-  const [teamSize, setTeamSize] = useState<number>(6);
-  const [workcase, setWorkcase] = useState<string>('Mixed Multitask Utility');
-  
-  const [allocations, setAllocations] = useState<Allocations>({
-    cursor: { tier: 'Pro', seats: 5, cost: 200 },
-    claude: { tier: 'Team', seats: 5, cost: 150 },
-    chatgpt: { tier: 'Team', seats: 1, cost: 35 },
-    windsurf: { tier: 'Teams', seats: 2, cost: 80 },
-  });
+  const [teamSize, setTeamSize] = useState<number>(5);
+  const [useCase, setUseCase] = useState<string>('mixed');
+  const [tools, setTools] = useState<ToolInput[]>([
+    { toolId: 'cursor', planName: 'Business', seats: 5, monthlySpend: 200 },
+    { toolId: 'claude', planName: 'Team', seats: 3, monthlySpend: 150 },
+    { toolId: 'chatgpt', planName: 'Team', seats: 1, monthlySpend: 35 },
+    { toolId: 'windsurf', planName: 'Teams', seats: 2, monthlySpend: 80 }
+  ]);
 
-  const [audit, setAudit] = useState<AuditResult | null>(null);
+  const [auditResult, setAuditResult] = useState<AuditSummary | null>(null);
 
-  const handleInputChange = (tool: keyof Allocations, field: 'seats' | 'cost' | 'tier', value: any) => {
-    setAllocations((prev) => ({
-      ...prev,
-      [tool]: {
-        ...prev[tool],
-        [field]: value,
-      },
-    }));
+  // Form persistence across window reloads
+  useEffect(() => {
+    const cachedState = localStorage.getItem('credex_audit_form_state');
+    if (cachedState) {
+      try {
+        const parsed = JSON.parse(cachedState);
+        setTeamSize(parsed.teamSize || 5);
+        setUseCase(parsed.useCase || 'mixed');
+        setTools(parsed.tools || []);
+      } catch (e) {
+        console.error("Failed to restore saved form states", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const stateToCache = { teamSize, useCase, tools };
+    localStorage.setItem('credex_audit_form_state', JSON.stringify(stateToCache));
+  }, [teamSize, useCase, tools]);
+
+  const handleCalculateAudit = () => {
+    const summary = runAuditEngine(tools, teamSize, useCase);
+    setAuditResult(summary);
   };
 
-  const executeAuditAssessment = () => {
-    let monthlySavings = 0;
-    const recommendations: AuditRecommendation[] = [];
-
-    // 1. Cursor Audit Logic
-    if (allocations.cursor.seats > 0) {
-      recommendations.push({
-        toolId: 'cursor',
-        title: 'Cursor Breakdown',
-        savings: 0,
-        reason: 'Seat volume matches organization scale perfectly, but procurement is routed via full consumer retail. Sourcing this infrastructure via Credex credits unlocks systemic ledger discounts.',
-      });
-    }
-
-    // 2. Claude Audit Logic
-    if (allocations.claude.tier === 'Team' && allocations.claude.seats < 5) {
-      const savings = 90;
-      monthlySavings += savings;
-      recommendations.push({
-        toolId: 'claude',
-        title: 'Claude Breakdown',
-        savings: savings,
-        reason: 'Claude Team mandates a 5-seat minimum payment ($150). Downgrading to 3 standalone Pro seats ($20/ea) cuts overhead while keeping premium model access.',
-      });
-    } else if (allocations.claude.seats > 0) {
-      const savings = 90;
-      monthlySavings += savings;
-      recommendations.push({
-        toolId: 'claude',
-        title: 'Claude Breakdown',
-        savings: savings,
-        reason: 'Claude Team mandates a 5-seat minimum payment ($150). Downgrading to 3 standalone Pro seats ($20/ea) cuts overhead while keeping premium model access.',
-      });
-    }
-
-    // 3. ChatGPT Audit Logic
-    if (allocations.chatgpt.seats === 1) {
-      const savings = 15;
-      monthlySavings += savings;
-      recommendations.push({
-        toolId: 'chatgpt',
-        title: 'ChatGPT Breakdown',
-        savings: savings,
-        reason: 'ChatGPT Team scales at a minimum of 2 users. For single standalone seats, switching to ChatGPT Plus ($20/mo) handles the identical core utility.',
-      });
-    }
-
-    // 4. Windsurf Audit Logic
-    if (allocations.windsurf.seats > 0) {
-      const savings = 40;
-      monthlySavings += savings;
-      recommendations.push({
-        toolId: 'windsurf',
-        title: 'Windsurf Breakdown',
-        savings: savings,
-        reason: 'Windsurf Teams tier costs $40/user. Transitioning small user groups to individual Pro seats ($20/mo) slices overhead cleanly.',
-      });
-    }
-
-    setAudit({
-      monthlySavings,
-      annualSavings: monthlySavings * 12,
-      recommendations,
-    });
+  const handleUpdateTool = (index: number, field: keyof ToolInput, value: any) => {
+    const updated = [...tools];
+    updated[index] = { ...updated[index], [field]: value };
+    setTools(updated);
   };
 
   return (
-    <main className="min-h-screen bg-[#090a0f] text-gray-100 p-8 antialiased selection:bg-emerald-500/20">
-      <div className="max-w-4xl mx-auto space-y-10">
+    <main className="min-h-screen bg-gray-950 text-gray-100 p-8 font-sans">
+      <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Header Title Section */}
-        <div className="space-y-2 border-b border-zinc-900 pb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-[#5da1cc] flex items-center gap-2">
+        <header className="border-b border-gray-800 pb-6 text-center md:text-left">
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
             StackWise // AI Spend Auditor
           </h1>
-          <p className="text-xs text-zinc-500 tracking-wide">
+          <p className="text-gray-400 mt-2 text-sm">
             Surface over-provisioned licenses and find optimized allocation routes instantly. Powered by Credex.
           </p>
-        </div>
+        </header>
 
-        {/* Metadata Information Selection Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Stated Organization Team Size</label>
-            <input
-              type="number"
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-900 border border-gray-800 p-6 rounded-xl">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              Stated Organization Team Size
+            </label>
+            <input 
+              type="number" 
+              className="w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-500 transition text-gray-100"
               value={teamSize}
-              onChange={(e) => setTeamSize(parseInt(e.target.value) || 0)}
-              className="w-full bg-[#0d0e15] border border-zinc-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-700 text-zinc-300 font-medium"
+              onChange={(e) => setTeamSize(Number(e.target.value))}
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Primary Machine-Workload Use Case</label>
-            <input
-              type="text"
-              value={workcase}
-              onChange={(e) => setWorkcase(e.target.value)}
-              className="w-full bg-[#0d0e15] border border-zinc-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-700 text-zinc-300 font-medium"
-            />
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              Primary Machine Workload Use Case
+            </label>
+            <select
+              className="w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-500 transition text-gray-100"
+              value={useCase}
+              onChange={(e) => setUseCase(e.target.value)}
+            >
+              <option value="coding">Coding / Core App Engineering</option>
+              <option value="writing">Writing & Copy Production</option>
+              <option value="data">Data Analysis & Modeling</option>
+              <option value="research">Academic Research Profiles</option>
+              <option value="mixed">Mixed Multitask Utility</option>
+            </select>
           </div>
-        </div>
+        </section>
 
-        {/* Current Tool Allocations Form Track */}
-        <div className="space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Current AI Tool Allocations</h3>
+        <section className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+          <h2 className="text-lg font-bold text-gray-200">Current AI Tool Allocations</h2>
           
-          <div className="space-y-3">
-            {(Object.keys(allocations) as Array<keyof Allocations>).map((toolId) => (
-              <div key={toolId} className="grid grid-cols-4 items-center bg-[#0d0e15] border border-zinc-900/60 p-4 rounded-xl gap-4">
-                <span className="text-sm font-semibold capitalize text-emerald-500">{toolId}</span>
+          <div className="space-y-4">
+            {tools.map((tool, index) => (
+              <div key={tool.toolId} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center bg-gray-950 p-4 border border-gray-800 rounded-lg">
+                <span className="font-semibold text-sm capitalize text-emerald-400">{tool.toolId.replace('_', ' ')}</span>
                 
-                <input
-                  type="text"
-                  value={allocations[toolId].tier}
-                  onChange={(e) => handleInputChange(toolId, 'tier', e.target.value)}
-                  className="bg-transparent border-b border-zinc-800 text-xs text-zinc-400 py-1 focus:outline-none focus:border-zinc-600 text-center"
-                  placeholder="Tier"
+                <input 
+                  type="text" 
+                  placeholder="Plan Tier Name"
+                  className="bg-gray-900 border border-gray-700 rounded p-2 text-xs focus:outline-none text-gray-200"
+                  value={tool.planName}
+                  onChange={(e) => handleUpdateTool(index, 'planName', e.target.value)}
                 />
-
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-[10px] text-zinc-600 font-bold uppercase">Seats:</span>
-                  <input
-                    type="number"
-                    value={allocations[toolId].seats}
-                    onChange={(e) => handleInputChange(toolId, 'seats', parseInt(e.target.value) || 0)}
-                    className="w-10 bg-zinc-900/50 text-center text-xs p-1 rounded font-mono text-zinc-300 font-bold focus:outline-none"
+                
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-400">Seats:</span>
+                  <input 
+                    type="number" 
+                    className="w-16 bg-gray-900 border border-gray-700 rounded p-2 text-xs text-center text-gray-100"
+                    value={tool.seats}
+                    onChange={(e) => handleUpdateTool(index, 'seats', Number(e.target.value))}
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-[10px] text-zinc-600 font-bold uppercase">Cost ($):</span>
-                  <input
-                    type="number"
-                    value={allocations[toolId].cost}
-                    onChange={(e) => handleInputChange(toolId, 'cost', parseInt(e.target.value) || 0)}
-                    className="w-16 bg-zinc-900/50 text-right text-xs p-1 rounded font-mono text-zinc-300 font-bold focus:outline-none"
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-400">Cost ($):</span>
+                  <input 
+                    type="number" 
+                    className="w-24 bg-gray-900 border border-gray-700 rounded p-2 text-xs text-center text-gray-100"
+                    value={tool.monthlySpend}
+                    onChange={(e) => handleUpdateTool(index, 'monthlySpend', Number(e.target.value))}
                   />
                 </div>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Run Action Audit Trigger Button */}
-        <button
-          onClick={executeAuditAssessment}
-          className="w-full bg-[#1e3a2f] hover:bg-[#254a3b] border border-emerald-800/40 text-emerald-400 font-bold py-3.5 px-6 rounded-xl transition-all text-xs uppercase tracking-widest"
-        >
-          Execute Real-Time Audit Assessment
-        </button>
+          <button
+            onClick={handleCalculateAudit}
+            className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-gray-950 text-sm font-bold tracking-wide uppercase py-3 rounded-lg shadow-lg hover:brightness-110 active:scale-[0.99] transition"
+          >
+            Execute Real-Time Audit Assessment
+          </button>
+        </section>
 
-        {/* Evaluation Output Section */}
-        {audit && (
-          <div className="space-y-8 pt-4 border-t border-zinc-900 animate-in fade-in duration-200">
-            
-            {/* Upper Financial Runway Metrics Row */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Identified Monthly Runway Savings</span>
-                <div className="text-2xl font-black text-emerald-400 font-mono">${audit.monthlySavings}</div>
+        {auditResult && (
+          <section className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-gray-950 p-4 border border-gray-800 rounded-lg text-center">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Identified Monthly Savings</p>
+                <p className="text-3xl font-black text-emerald-400 mt-1">${auditResult.totalMonthlySavings}</p>
               </div>
-              <div className="space-y-1 text-right">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Projected Annual Capital Reclaimed</span>
-                <div className="text-2xl font-black text-blue-400 font-mono">${audit.annualSavings}</div>
+              <div className="bg-gray-950 p-4 border border-gray-800 rounded-lg text-center">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Projected Annual Capital Reclaimed</p>
+                <p className="text-3xl font-black text-blue-400 mt-1">${auditResult.totalAnnualSavings}</p>
               </div>
             </div>
 
-            {/* Progress Bars Stack Component */}
-            <div className="space-y-4 bg-[#0d0e15] border border-zinc-900 p-5 rounded-xl">
-              <div className="flex justify-between items-center text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                <span>Budget Efficiency Runway</span>
-                <span className="text-emerald-500">42% Optimized</span>
-              </div>
-              
-              <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden flex">
-                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: '65%' }}></div>
-                <div className="h-full bg-red-500/80 transition-all duration-500" style={{ width: '35%' }}></div>
-              </div>
-
-              <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider pt-1">
-                <div className="flex items-center gap-1.5 text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 block"></span>
-                  Optimized Base
-                </div>
-                <div className="flex items-center gap-1.5 text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-red-500 block animate-pulse"></span>
-                  Recovered Leakage (${audit.monthlySavings}/mo)
-                </div>
-              </div>
-            </div>
-
-            {/* Granular Audit Logs List */}
             <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Granular Optimization Vector Logs</h3>
-              
-              <div className="space-y-4">
-                {audit.recommendations.map((rec) => (
-                  <div key={rec.toolId} className="bg-[#0d0e15] border border-zinc-900/80 rounded-xl p-5 relative overflow-hidden group">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-sm font-bold text-gray-200">{rec.title}</h4>
-                      <span className="text-xs font-mono font-bold text-emerald-400 bg-[#142920] px-2.5 py-0.5 rounded-md border border-emerald-900/50">
-                        Reclaimed: ${rec.savings}/mo
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed max-w-3xl">{rec.reason}</p>
+              <h3 className="text-md font-bold text-gray-300">Granular Optimization Vector Logs</h3>
+              {auditResult.perToolRecommendations.map((rec) => (
+                <div key={rec.toolId} className="bg-gray-950 p-4 border border-l-4 border-gray-800 border-l-emerald-500 rounded-r-lg space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-bold capitalize text-gray-200">{rec.toolId.replace('_', ' ')} Breakdown</span>
+                    <span className="text-xs font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900">
+                      Reclaimed: ${rec.savings}/mo
+                    </span>
                   </div>
-                ))}
-              </div>
+                  <p className="text-xs text-gray-400 leading-relaxed">{rec.reason}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Action Actionable Download Handler */}
-            <button
-              onClick={() => alert('Generating full spend summary report asset configuration...')}
-              className="w-full bg-[#11121a] hover:bg-[#161824] border border-zinc-800 text-zinc-400 hover:text-zinc-200 font-bold py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
-            >
-              📥 Download Executive Audit Report
-            </button>
-
-          </div>
+            {auditResult.requiresCredexConsultation && (
+              <div className="bg-gradient-to-b from-blue-950/40 to-indigo-950/20 border border-blue-800 p-4 rounded-xl text-center space-y-3">
+                <h4 className="text-sm font-bold text-blue-300 uppercase tracking-wide">💡 High Volume Optimization Corridor Spotted</h4>
+                <p className="text-xs text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                  Your organization configuration features deep baseline infrastructural spending profiles. Sourcing directly through verified institutional secondary bulk options reduces these exact ledger outlays instantly.
+                </p>
+                <button className="bg-blue-500 text-gray-950 text-xs font-bold uppercase tracking-wider px-6 py-2 rounded-md hover:bg-blue-400 transition">
+                  Book Enterprise Credex Consultation
+                </button>
+              </div>
+            )}
+          </section>
         )}
+
       </div>
     </main>
   );
