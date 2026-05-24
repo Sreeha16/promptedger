@@ -130,10 +130,12 @@ export default function Home() {
 
           <button
             onClick={handleCalculateAudit}
-            className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-gray-950 text-sm font-bold tracking-wide uppercase py-3 rounded-lg shadow-lg hover:brightness-110 active:scale-[0.99] transition"
-          >
-            Execute Real-Time Audit Assessment
-          </button>
+              <button 
+  onClick={handleCalculateAudit}
+  className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-gray-950 font-bold py-3 px-6 rounded transition-all text-center uppercase tracking-wider text-sm hover:opacity-90"
+>
+  Execute Real-Time Audit Assessment
+</button>
         </section>
 
         {auditResult && (
@@ -148,7 +150,45 @@ export default function Home() {
                 <p className="text-3xl font-black text-blue-400 mt-1">${auditResult.totalAnnualSavings}</p>
               </div>
             </div>
+              
+             {/* Interactive Budget Optimization Runway Visualizer */}
+<div className="p-5 bg-zinc-950 border border-zinc-850 rounded-lg space-y-3">
+  <div className="flex justify-between items-center text-xs text-gray-400 font-semibold uppercase tracking-wider">
+    <span>Budget Efficiency Runway</span>
+    <span className="text-emerald-400">
+      {Math.round(((auditResult.totalMonthSpend - auditResult.totalMonthlySavings) / auditResult.totalMonthSpend) * 100) || 0}% Optimized
+    </span>
+  </div>
+  
+  {/* The Visual Progress Bar Container */}
+  <div className="w-full h-3 bg-red-950/40 rounded-full overflow-hidden flex border border-zinc-800">
+    {/* Optimized Spend Portion */}
+    <div 
+      className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out"
+      style={{ 
+        width: `${((auditResult.totalMonthSpend - auditResult.totalMonthlySavings) / auditResult.totalMonthSpend) * 100}%` 
+      }}
+    />
+    {/* Wasted/Saved Spend Portion */}
+    <div 
+      className="h-full bg-gradient-to-r from-red-500 to-rose-600 transition-all duration-500 ease-out opacity-80 animate-pulse"
+      style={{ 
+        width: `${(auditResult.totalMonthlySavings / auditResult.totalMonthSpend) * 100}%` 
+      }}
+    />
+  </div>
 
+  <div className="flex justify-between items-center text-xs text-zinc-500">
+    <div className="flex items-center gap-1.5">
+      <span className="w-2 h-2 rounded-full bg-emerald-500 block"></span>
+      <span>Optimized Target (${auditResult.totalMonthSpend - auditResult.totalMonthlySavings}/mo)</span>
+    </div>
+    <div className="flex items-center gap-1.5">
+      <span className="w-2 h-2 rounded-full bg-red-500 block animate-pulse"></span>
+      <span>Recoverable Leakage (${auditResult.totalMonthlySavings}/mo)</span>
+    </div>
+  </div>
+</div>
             <div className="space-y-4">
               <h3 className="text-md font-bold text-gray-300">Granular Optimization Vector Logs</h3>
               {auditResult.perToolRecommendations.map((rec) => (
