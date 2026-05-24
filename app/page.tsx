@@ -39,6 +39,11 @@ export default function Home() {
     const summary = runAuditEngine(tools, teamSize, useCase);
     setAuditResult(summary);
   };
+  const handleDownloadReport = () => {
+    if (typeof window !== "undefined") {
+      window.print();
+    }
+  };
 
   const handleUpdateTool = (index: number, field: keyof ToolInput, value: any) => {
     const updated = [...tools];
@@ -148,7 +153,117 @@ export default function Home() {
                 <p className="text-3xl font-black text-blue-400 mt-1">${auditResult.totalAnnualSavings}</p>
               </div>
             </div>
+             {/* Interactive Budget Optimization Runway Visualizer */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mt-4 space-y-3">
+        <div className="flex justify-between items-center text-xs text-gray-400 font-semibold uppercase tracking-wider">
+          <span>Budget Efficiency Runway</span>
+          <span className="text-emerald-400">
+            {auditResult.totalMonthlySavings > 0 ? Math.round((auditResult.totalMonthlySavings / (auditResult.totalMonthlySavings + 200)) * 100) : 0}% Optimized
+          </span>
+        </div>
+        
+        {/* Progress Bar Container */}
+         {/* Interactive Budget Optimization Runway Visualizer */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mt-4 space-y-3">
+        <div className="flex justify-between items-center text-xs text-gray-400 font-semibold uppercase tracking-wider">
+          <span>Budget Efficiency Runway</span>
+          <span className="text-emerald-400">
+            {auditResult.totalMonthlySavings > 0 ? Math.round((auditResult.totalMonthlySavings / (auditResult.totalMonthlySavings + 200)) * 100) : 0}% Optimized
+          </span>
+        </div>
+        
+        {/* Progress Bar Container */}
+        <div className="w-full h-3 bg-red-950/40 rounded-full overflow-hidden flex border border-gray-800">
+          <div 
+            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out"
+            style={{ width: '65%' }} 
+          />
+          <div 
+            className="h-full bg-gradient-to-r from-red-500 to-rose-600 transition-all duration-500 ease-out opacity-80 animate-pulse"
+            style={{ width: '35%' }} 
+          />
+        </div>
 
+        <div className="flex justify-between items-center text-xs text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 block"></span>
+            <span>Optimized Base</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500 block animate-pulse"></span>
+            <span>Recovered Leakage (${auditResult.totalMonthlySavings}/mo)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Granular Optimization Vector Logs */}
+      <div className="space-y-4 mt-6">
+        <h3 className="text-md font-bold text-gray-300">Granular Optimization Vector Logs</h3>
+        {auditResult.perToolRecommendations.map((rec) => {
+          // Hide the raw bundling logic placeholder string from standard tool mapping logs
+          if (rec.toolId === 'bundling_alert') return null;
+          
+          return (
+            <div key={rec.toolId} className="bg-gray-950 p-4 border border-gray-800 rounded-lg">
+              <div className="flex justify-between items-center text-sm mb-1">
+                <span className="font-bold capitalize text-gray-200">{rec.toolId.replace('_', ' ')}</span>
+                <span className="text-xs font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                  Reclaimed: ${rec.savings}/mo
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 leading-relaxed">{rec.reason}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Download Executive Audit Report Action */}
+      <div className="mt-4 print:hidden">
+        <button
+          onClick={handleDownloadReport}
+          className="w-full bg-zinc-800 hover:bg-zinc-700 text-emerald-400 border border-emerald-500/30 hover:border-emerald-400 font-bold py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Executive Audit Report
+        </button>
+      </div>
+
+      {/* Enterprise Consultation Trigger */}
+      {auditResult.requiresCredexConsultation && (
+        <div className="bg-gradient-to-b from-blue-950/40 to-indigo-950/20 border border-blue-900/40 p-5 rounded-xl mt-4 text-center space-y-3">
+          <h4 className="text-sm font-bold text-blue-300 uppercase tracking-wide">💡 High Volume Spend Alert</h4>
+          <p className="text-xs text-gray-300 max-w-xl mx-auto leading-relaxed">
+            Your organization configuration features deep baseline infrastructural spending. Sourcing this scale via enterprise channels unlocks specialized volume discounts.
+          </p>
+          <button className="bg-blue-500 hover:bg-blue-600 text-gray-950 text-xs font-bold uppercase tracking-wider py-2 px-4 rounded transition-all">
+            Book Enterprise Credex Consultation
+          </button>
+        </div>
+      )}
+        <div className="w-full h-3 bg-red-950/40 rounded-full overflow-hidden flex border border-gray-800">
+          <div 
+            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out"
+            style={{ width: '65%' }} 
+          />
+          <div 
+            className="h-full bg-gradient-to-r from-red-500 to-rose-600 transition-all duration-500 ease-out opacity-80 animate-pulse"
+            style={{ width: '35%' }} 
+          />
+        </div>
+
+        <div className="flex justify-between items-center text-xs text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 block"></span>
+            <span>Optimized Base</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500 block animate-pulse"></span>
+            <span>Recovered Leakage (${auditResult.totalMonthlySavings}/mo)</span>
+          </div>
+        </div>
+      </div>
             <div className="space-y-4">
               <h3 className="text-md font-bold text-gray-300">Granular Optimization Vector Logs</h3>
               {auditResult.perToolRecommendations.map((rec) => (
