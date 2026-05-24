@@ -128,12 +128,12 @@ export default function Home() {
             ))}
           </div>
 
-          <button
-            onClick={handleCalculateAudit}
-            className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-gray-950 text-sm font-bold tracking-wide uppercase py-3 rounded-lg shadow-lg hover:brightness-110 active:scale-[0.99] transition"
-          >
-            Execute Real-Time Audit Assessment
-          </button>
+          <button 
+  onClick={handleCalculateAudit}
+  className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-gray-950 font-bold py-3 px-6 rounded transition-all text-center uppercase tracking-wider text-sm hover:opacity-90"
+>
+  Execute Real-Time Audit Assessment
+</button>
         </section>
 
         {auditResult && (
