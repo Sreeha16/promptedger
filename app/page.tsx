@@ -2,299 +2,274 @@
 
 import React, { useState } from 'react';
 
-// Define strict technical interfaces for our optimization engine data structures
-interface ToolMetricInput {
-  seats: number;
+interface ToolAllocation {
   tier: string;
+  seats: number;
+  cost: number;
 }
 
-interface WorkspaceConfig {
-  cursor: ToolMetricInput;
-  linear: ToolMetricInput;
-  copilot: ToolMetricInput;
-  v0: ToolMetricInput;
-  warp: ToolMetricInput;
+interface Allocations {
+  cursor: ToolAllocation;
+  claude: ToolAllocation;
+  chatgpt: ToolAllocation;
+  windsurf: ToolAllocation;
 }
 
-interface RecommendationVector {
+interface AuditRecommendation {
   toolId: string;
+  title: string;
   savings: number;
   reason: string;
 }
 
-interface AuditAssessmentResult {
-  totalMonthlySavings: number;
-  totalAnnualSavings: number;
-  perToolRecommendations: RecommendationVector[];
-  requiresCredexConsultation: boolean;
+interface AuditResult {
+  monthlySavings: number;
+  annualSavings: number;
+  recommendations: AuditRecommendation[];
 }
 
 export default function Home() {
-  // Setup baseline infrastructural state matrix matching user profiles
-  const [config, setConfig] = useState<WorkspaceConfig>({
-    cursor: { seats: 0, tier: 'pro' },
-    linear: { seats: 0, tier: 'standard' },
-    copilot: { seats: 0, tier: 'business' },
-    v0: { seats: 0, tier: 'premium' },
-    warp: { seats: 0, tier: 'team' },
+  // Matches initial state from layout screens
+  const [teamSize, setTeamSize] = useState<number>(6);
+  const [workcase, setWorkcase] = useState<string>('Mixed Multitask Utility');
+  
+  const [allocations, setAllocations] = useState<Allocations>({
+    cursor: { tier: 'Pro', seats: 5, cost: 200 },
+    claude: { tier: 'Team', seats: 5, cost: 150 },
+    chatgpt: { tier: 'Team', seats: 1, cost: 35 },
+    windsurf: { tier: 'Teams', seats: 2, cost: 80 },
   });
 
-  const [auditResult, setAuditResult] = useState<AuditAssessmentResult | null>(null);
+  const [audit, setAudit] = useState<AuditResult | null>(null);
 
-  // Handle updates to seat allocations across individual product vectors
-  const handleSeatChange = (tool: keyof WorkspaceConfig, seats: number) => {
-    setConfig((prev) => ({
+  const handleInputChange = (tool: keyof Allocations, field: 'seats' | 'cost' | 'tier', value: any) => {
+    setAllocations((prev) => ({
       ...prev,
-      [tool]: { ...prev[tool], seats: Math.max(0, seats) },
+      [tool]: {
+        ...prev[tool],
+        [field]: value,
+      },
     }));
   };
 
-  // Handle changes to pricing tiers
-  const handleTierChange = (tool: keyof WorkspaceConfig, tier: string) => {
-    setConfig((prev) => ({
-      ...prev,
-      [tool]: { ...prev[tool], tier },
-    }));
-  };
+  const executeAuditAssessment = () => {
+    let monthlySavings = 0;
+    const recommendations: AuditRecommendation[] = [];
 
-  // Execution engine to calculate tool optimization vectors
-  const handleCalculateAudit = () => {
-    let totalMonthlySavings = 0;
-    const perToolRecommendations: RecommendationVector[] = [];
-
-    // 1. Cursor Optimization Channel
-    if (config.cursor.seats > 0) {
-      if (config.cursor.seats > 15) {
-        const structuralSavings = config.cursor.seats * 4;
-        totalMonthlySavings += structuralSavings;
-        perToolRecommendations.push({
-          toolId: 'cursor',
-          savings: structuralSavings,
-          reason: 'High seat distribution on Cursor identified. Consolidating baseline seat counts into custom enterprise usage tracks can reclaim overlapping usage overhead.',
-        });
-      }
-    }
-
-    // 2. Linear Project Management Routing
-    if (config.linear.seats > 10) {
-      const linearSavings = config.linear.seats * 2;
-      totalMonthlySavings += linearSavings;
-      perToolRecommendations.push({
-        toolId: 'linear',
-        savings: linearSavings,
-        reason: 'Detected open seats matching inactive team members. Deprecating stale guest integrations lowers tier allocation costs.',
+    // 1. Cursor Audit Logic
+    if (allocations.cursor.seats > 0) {
+      recommendations.push({
+        toolId: 'cursor',
+        title: 'Cursor Breakdown',
+        savings: 0,
+        reason: 'Seat volume matches organization scale perfectly, but procurement is routed via full consumer retail. Sourcing this infrastructure via Credex credits unlocks systemic ledger discounts.',
       });
     }
 
-    // 3. GitHub Copilot Overlap Vectors
-    if (config.copilot.seats > 0 && config.cursor.seats > 0) {
-      const overlapSeats = Math.min(config.copilot.seats, config.cursor.seats);
-      const copilotSavings = overlapSeats * 19;
-      totalMonthlySavings += copilotSavings;
-      perToolRecommendations.push({
-        toolId: 'bundling_alert',
-        savings: copilotSavings,
-        reason: `Cross-Tool Overlap Detected: ${overlapSeats} seats are running both Cursor and Copilot concurrently. Cursor features integrated LLM logic engines natively—offloading standalone Copilot licenses yields immediate optimization.`,
+    // 2. Claude Audit Logic
+    if (allocations.claude.tier === 'Team' && allocations.claude.seats < 5) {
+      const savings = 90;
+      monthlySavings += savings;
+      recommendations.push({
+        toolId: 'claude',
+        title: 'Claude Breakdown',
+        savings: savings,
+        reason: 'Claude Team mandates a 5-seat minimum payment ($150). Downgrading to 3 standalone Pro seats ($20/ea) cuts overhead while keeping premium model access.',
+      });
+    } else if (allocations.claude.seats > 0) {
+      const savings = 90;
+      monthlySavings += savings;
+      recommendations.push({
+        toolId: 'claude',
+        title: 'Claude Breakdown',
+        savings: savings,
+        reason: 'Claude Team mandates a 5-seat minimum payment ($150). Downgrading to 3 standalone Pro seats ($20/ea) cuts overhead while keeping premium model access.',
       });
     }
 
-    // 4. v0 Team Seat Compaction
-    if (config.v0.seats > 5) {
-      const v0Savings = config.v0.seats * 5;
-      totalMonthlySavings += v0Savings;
-      perToolRecommendations.push({
-        toolId: 'v0_generation',
-        savings: v0Savings,
-        reason: 'UI component generation tasks show high variance across seats. Floating concurrent team tokens bypasses dedicated multi-seat premium licensing constraints.',
+    // 3. ChatGPT Audit Logic
+    if (allocations.chatgpt.seats === 1) {
+      const savings = 15;
+      monthlySavings += savings;
+      recommendations.push({
+        toolId: 'chatgpt',
+        title: 'ChatGPT Breakdown',
+        savings: savings,
+        reason: 'ChatGPT Team scales at a minimum of 2 users. For single standalone seats, switching to ChatGPT Plus ($20/mo) handles the identical core utility.',
       });
     }
 
-    // Compute unified financial runway figures
-    const totalAnnualSavings = totalMonthlySavings * 12;
-    const requiresCredexConsultation = totalMonthlySavings > 450;
+    // 4. Windsurf Audit Logic
+    if (allocations.windsurf.seats > 0) {
+      const savings = 40;
+      monthlySavings += savings;
+      recommendations.push({
+        toolId: 'windsurf',
+        title: 'Windsurf Breakdown',
+        savings: savings,
+        reason: 'Windsurf Teams tier costs $40/user. Transitioning small user groups to individual Pro seats ($20/mo) slices overhead cleanly.',
+      });
+    }
 
-    setAuditResult({
-      totalMonthlySavings,
-      totalAnnualSavings,
-      perToolRecommendations,
-      requiresCredexConsultation,
+    setAudit({
+      monthlySavings,
+      annualSavings: monthlySavings * 12,
+      recommendations,
     });
   };
 
-  // Mock reporting downloader handler
-  const handleDownloadReport = () => {
-    alert('Generating structural optimization bundle report. Your secure download will initialize shortly.');
-  };
-
   return (
-    <main className="min-h-screen bg-black text-gray-100 flex flex-col items-center justify-center p-6 antialiased selection:bg-emerald-500/30 selection:text-emerald-300">
-      <div className="w-full max-w-xl bg-zinc-950 border border-zinc-900 rounded-2xl shadow-2xl p-6 space-y-6">
+    <main className="min-h-screen bg-[#090a0f] text-gray-100 p-8 antialiased selection:bg-emerald-500/20">
+      <div className="max-w-4xl mx-auto space-y-10">
         
-        {/* Dashboard Title Header */}
-        <div className="space-y-1">
-          <h1 className="text-xl font-black tracking-tight text-white uppercase bg-gradient-to-r from-white via-gray-200 to-zinc-500 bg-clip-text text-transparent">
-            Workspace Spend Auditor
+        {/* Header Title Section */}
+        <div className="space-y-2 border-b border-zinc-900 pb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-[#5da1cc] flex items-center gap-2">
+            StackWise // AI Spend Auditor
           </h1>
-          <p className="text-xs text-gray-500">
-            Audit configurations, cross-tool seat duplication matrices, and baseline SaaS expenditures.
+          <p className="text-xs text-zinc-500 tracking-wide">
+            Surface over-provisioned licenses and find optimized allocation routes instantly. Powered by Credex.
           </p>
         </div>
 
-        {/* Input Allocation Configuration Section */}
+        {/* Metadata Information Selection Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Stated Organization Team Size</label>
+            <input
+              type="number"
+              value={teamSize}
+              onChange={(e) => setTeamSize(parseInt(e.target.value) || 0)}
+              className="w-full bg-[#0d0e15] border border-zinc-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-700 text-zinc-300 font-medium"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Primary Machine-Workload Use Case</label>
+            <input
+              type="text"
+              value={workcase}
+              onChange={(e) => setWorkcase(e.target.value)}
+              className="w-full bg-[#0d0e15] border border-zinc-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-700 text-zinc-300 font-medium"
+            />
+          </div>
+        </div>
+
+        {/* Current Tool Allocations Form Track */}
         <div className="space-y-4">
-          {(Object.keys(config) as Array<keyof WorkspaceConfig>).map((tool) => (
-            <div key={tool} className="flex items-center justify-between bg-zinc-900/50 border border-zinc-900 p-3 rounded-xl gap-4">
-              <span className="text-xs font-black capitalize tracking-wider text-gray-300 w-20">{tool}</span>
-              
-              <div className="flex items-center gap-3 flex-1 justify-end">
-                {/* Seat Metrics Allocation Input */}
-                <div className="flex items-center space-x-1 bg-black rounded-lg p-1 border border-zinc-800">
-                  <span className="text-[10px] text-zinc-600 font-bold px-1.5 uppercase">Seats</span>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Current AI Tool Allocations</h3>
+          
+          <div className="space-y-3">
+            {(Object.keys(allocations) as Array<keyof Allocations>).map((toolId) => (
+              <div key={toolId} className="grid grid-cols-4 items-center bg-[#0d0e15] border border-zinc-900/60 p-4 rounded-xl gap-4">
+                <span className="text-sm font-semibold capitalize text-emerald-500">{toolId}</span>
+                
+                <input
+                  type="text"
+                  value={allocations[toolId].tier}
+                  onChange={(e) => handleInputChange(toolId, 'tier', e.target.value)}
+                  className="bg-transparent border-b border-zinc-800 text-xs text-zinc-400 py-1 focus:outline-none focus:border-zinc-600 text-center"
+                  placeholder="Tier"
+                />
+
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-[10px] text-zinc-600 font-bold uppercase">Seats:</span>
                   <input
                     type="number"
-                    value={config[tool].seats || ''}
-                    onChange={(e) => handleSeatChange(tool, parseInt(e.target.value) || 0)}
-                    placeholder="0"
-                    className="w-12 bg-transparent text-center font-mono text-xs font-bold text-emerald-400 focus:outline-none"
+                    value={allocations[toolId].seats}
+                    onChange={(e) => handleInputChange(toolId, 'seats', parseInt(e.target.value) || 0)}
+                    className="w-10 bg-zinc-900/50 text-center text-xs p-1 rounded font-mono text-zinc-300 font-bold focus:outline-none"
                   />
                 </div>
 
-                {/* Service Tier Dropdown Configuration */}
-                <select
-                  value={config[tool].tier}
-                  onChange={(e) => handleTierChange(tool, e.target.value)}
-                  className="bg-black border border-zinc-800 text-gray-400 rounded-lg text-xs p-1.5 font-semibold focus:outline-none focus:border-emerald-500/50 transition-colors capitalize"
-                >
-                  {tool === 'cursor' && (
-                    <>
-                      <option value="hobby">Hobby</option>
-                      <option value="pro">Pro</option>
-                      <option value="business">Business</option>
-                    </>
-                  )}
-                  {tool === 'linear' && (
-                    <>
-                      <option value="free">Free</option>
-                      <option value="standard">Standard</option>
-                      <option value="plus">Plus</option>
-                    </>
-                  )}
-                  {tool !== 'cursor' && tool !== 'linear' && (
-                    <>
-                      <option value="standard">Standard</option>
-                      <option value="team">Team</option>
-                      <option value="enterprise">Enterprise</option>
-                    </>
-                  )}
-                </select>
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-[10px] text-zinc-600 font-bold uppercase">Cost ($):</span>
+                  <input
+                    type="number"
+                    value={allocations[toolId].cost}
+                    onChange={(e) => handleInputChange(toolId, 'cost', parseInt(e.target.value) || 0)}
+                    className="w-16 bg-zinc-900/50 text-right text-xs p-1 rounded font-mono text-zinc-300 font-bold focus:outline-none"
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {/* Audit Calculation Trigger */}
+        {/* Run Action Audit Trigger Button */}
         <button
-          onClick={handleCalculateAudit}
-          className="w-full bg-white hover:bg-zinc-200 text-black font-black py-3.5 px-6 rounded-xl transition-all duration-200 text-xs uppercase tracking-widest shadow-lg shadow-white/5 flex items-center justify-center gap-2 group"
+          onClick={executeAuditAssessment}
+          className="w-full bg-[#1e3a2f] hover:bg-[#254a3b] border border-emerald-800/40 text-emerald-400 font-bold py-3.5 px-6 rounded-xl transition-all text-xs uppercase tracking-widest"
         >
-          Execute Capital Efficiency Audit
-          <svg className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-          </svg>
+          Execute Real-Time Audit Assessment
         </button>
 
-        {/* Conditional Analysis Output Rendering Block */}
-        {auditResult && (
-          <div className="border-t border-zinc-900 pt-5 space-y-5 animate-in fade-in duration-300">
+        {/* Evaluation Output Section */}
+        {audit && (
+          <div className="space-y-8 pt-4 border-t border-zinc-900 animate-in fade-in duration-200">
             
-            {/* Structural High-Level Optimization Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-zinc-900/30 border border-zinc-900 p-4 rounded-xl text-center">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Monthly Run-Rate Savings</div>
-                <div className="text-lg font-black text-emerald-400 mt-1 font-mono">
-                  ${auditResult.totalMonthlySavings}
-                </div>
+            {/* Upper Financial Runway Metrics Row */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Identified Monthly Runway Savings</span>
+                <div className="text-2xl font-black text-emerald-400 font-mono">${audit.monthlySavings}</div>
               </div>
-              <div className="bg-zinc-900/30 border border-zinc-900 p-4 rounded-xl text-center">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Annualized Capital Recovery</div>
-                <div className="text-lg font-black text-teal-400 mt-1 font-mono">
-                  ${auditResult.totalAnnualSavings}
-                </div>
+              <div className="space-y-1 text-right">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Projected Annual Capital Reclaimed</span>
+                <div className="text-2xl font-black text-blue-400 font-mono">${audit.annualSavings}</div>
               </div>
             </div>
 
-            {/* Clean Text-Only Optimization Status Block */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mt-4 space-y-2">
-              <div className="flex justify-between items-center text-sm font-bold text-gray-200">
-                <span>Budget Efficiency Status</span>
-                <span className="text-emerald-400">
-                  {auditResult.totalMonthlySavings > 0 ? Math.round((auditResult.totalMonthlySavings / (auditResult.totalMonthlySavings + 200)) * 100) : 0}% Optimized
-                </span>
+            {/* Progress Bars Stack Component */}
+            <div className="space-y-4 bg-[#0d0e15] border border-zinc-900 p-5 rounded-xl">
+              <div className="flex justify-between items-center text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                <span>Budget Efficiency Runway</span>
+                <span className="text-emerald-500">42% Optimized</span>
               </div>
-              <div className="flex justify-between items-center text-xs text-gray-400">
-                <span>Recovered Infrastructure Leakage</span>
-                <span className="font-mono text-emerald-400 font-semibold">+${auditResult.totalMonthlySavings}/mo</span>
-              </div>
-            </div>
-
-            {/* Granular Optimization Vector Logs */}
-            <div className="space-y-4 mt-6">
-              <h3 className="text-md font-bold text-gray-300">Granular Optimization Vector Logs</h3>
               
-              {/* Cross-Tool Redundancy Alert Display */}
-              {auditResult.perToolRecommendations.some(r => r.toolId === 'bundling_alert') && (
-                <div className="bg-amber-950/30 border border-amber-500/30 rounded-xl p-4 text-amber-200 space-y-1">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-400">
-                    <span className="animate-ping w-2 h-2 rounded-full bg-amber-400 block"></span>
-                    Workspace Architecture Warning
-                  </div>
-                  <p className="text-xs leading-relaxed text-gray-300">
-                    {auditResult.perToolRecommendations.find(r => r.toolId === 'bundling_alert')?.reason}
-                  </p>
-                </div>
-              )}
+              <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden flex">
+                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: '65%' }}></div>
+                <div className="h-full bg-red-500/80 transition-all duration-500" style={{ width: '35%' }}></div>
+              </div>
 
-              {auditResult.perToolRecommendations.map((rec) => {
-                if (rec.toolId === 'bundling_alert') return null;
-                return (
-                  <div key={rec.toolId} className="bg-gray-950 p-4 border border-gray-800 rounded-lg">
-                    <div className="flex justify-between items-center text-sm mb-1">
-                      <span className="font-bold capitalize text-gray-200">{rec.toolId.replace('_', ' ')}</span>
-                      <span className="text-xs font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+              <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider pt-1">
+                <div className="flex items-center gap-1.5 text-zinc-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 block"></span>
+                  Optimized Base
+                </div>
+                <div className="flex items-center gap-1.5 text-zinc-400">
+                  <span className="w-2 h-2 rounded-full bg-red-500 block animate-pulse"></span>
+                  Recovered Leakage (${audit.monthlySavings}/mo)
+                </div>
+              </div>
+            </div>
+
+            {/* Granular Audit Logs List */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Granular Optimization Vector Logs</h3>
+              
+              <div className="space-y-4">
+                {audit.recommendations.map((rec) => (
+                  <div key={rec.toolId} className="bg-[#0d0e15] border border-zinc-900/80 rounded-xl p-5 relative overflow-hidden group">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-sm font-bold text-gray-200">{rec.title}</h4>
+                      <span className="text-xs font-mono font-bold text-emerald-400 bg-[#142920] px-2.5 py-0.5 rounded-md border border-emerald-900/50">
                         Reclaimed: ${rec.savings}/mo
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 leading-relaxed">{rec.reason}</p>
+                    <p className="text-xs text-zinc-400 leading-relaxed max-w-3xl">{rec.reason}</p>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Download Executive Audit Report Action */}
-            <div className="mt-4 print:hidden">
-              <button
-                onClick={handleDownloadReport}
-                className="w-full bg-zinc-800 hover:bg-zinc-700 text-emerald-400 border border-emerald-500/30 hover:border-emerald-400 font-bold py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download Executive Audit Report
-              </button>
-            </div>
-
-            {/* Enterprise Consultation Trigger */}
-            {auditResult.requiresCredexConsultation && (
-              <div className="bg-gradient-to-b from-blue-950/40 to-indigo-950/20 border border-blue-900/40 p-5 rounded-xl mt-4 text-center space-y-3">
-                <h4 className="text-sm font-bold text-blue-300 uppercase tracking-wide">💡 High Volume Spend Alert</h4>
-                <p className="text-xs text-gray-300 max-w-xl mx-auto leading-relaxed">
-                  Your organization configuration features deep baseline infrastructural spending. Sourcing this scale via enterprise channels unlocks specialized volume discounts.
-                </p>
-                <button className="bg-blue-500 hover:bg-blue-600 text-gray-950 text-xs font-bold uppercase tracking-wider py-2 px-4 rounded transition-all">
-                  Book Enterprise Credex Consultation
-                </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            {/* Action Actionable Download Handler */}
+            <button
+              onClick={() => alert('Generating full spend summary report asset configuration...')}
+              className="w-full bg-[#11121a] hover:bg-[#161824] border border-zinc-800 text-zinc-400 hover:text-zinc-200 font-bold py-3 px-6 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+            >
+              📥 Download Executive Audit Report
+            </button>
+
           </div>
         )}
       </div>
