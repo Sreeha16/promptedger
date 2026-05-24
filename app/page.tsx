@@ -128,11 +128,9 @@ export default function Home() {
             ))}
           </div>
 
-          <button
-            onClick={handleCalculateAudit}
-              <button 
+         <button
   onClick={handleCalculateAudit}
-  className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-gray-950 font-bold py-3 px-6 rounded transition-all text-center uppercase tracking-wider text-sm hover:opacity-90"
+  className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-gray-950 font-bold py-3"
 >
   Execute Real-Time Audit Assessment
 </button>
@@ -156,7 +154,7 @@ export default function Home() {
   <div className="flex justify-between items-center text-xs text-gray-400 font-semibold uppercase tracking-wider">
     <span>Budget Efficiency Runway</span>
     <span className="text-emerald-400">
-      {Math.round(((auditResult.totalMonthSpend - auditResult.totalMonthlySavings) / auditResult.totalMonthSpend) * 100) || 0}% Optimized
+      {Math.round(((auditResult.totalNewSpend - auditResult.totalMonthlySavings) / auditResult.totalNewSpend) * 100) || 0}% Optimized
     </span>
   </div>
   
@@ -166,14 +164,14 @@ export default function Home() {
     <div 
       className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out"
       style={{ 
-        width: `${((auditResult.totalMonthSpend - auditResult.totalMonthlySavings) / auditResult.totalMonthSpend) * 100}%` 
+        width: `${((auditResult.totalNewSpend - auditResult.totalMonthlySavings) / auditResult.totalNewSpend) * 100}%` 
       }}
     />
     {/* Wasted/Saved Spend Portion */}
     <div 
       className="h-full bg-gradient-to-r from-red-500 to-rose-600 transition-all duration-500 ease-out opacity-80 animate-pulse"
       style={{ 
-        width: `${(auditResult.totalMonthlySavings / auditResult.totalMonthSpend) * 100}%` 
+        width: `${(auditResult.totalMonthlySavings / auditResult.totalNewSpend) * 100}%` 
       }}
     />
   </div>
@@ -181,7 +179,7 @@ export default function Home() {
   <div className="flex justify-between items-center text-xs text-zinc-500">
     <div className="flex items-center gap-1.5">
       <span className="w-2 h-2 rounded-full bg-emerald-500 block"></span>
-      <span>Optimized Target (${auditResult.totalMonthSpend - auditResult.totalMonthlySavings}/mo)</span>
+      <span>Optimized Target (${auditResult.totalNewSpend - auditResult.totalMonthlySavings}/mo)</span>
     </div>
     <div className="flex items-center gap-1.5">
       <span className="w-2 h-2 rounded-full bg-red-500 block animate-pulse"></span>
