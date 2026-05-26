@@ -137,7 +137,8 @@ export default function Home() {
 >
   Execute Real-Time Audit Assessment
 </button>
-       
+        </section>
+
         {auditResult && (
           <section className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -242,11 +243,15 @@ export default function Home() {
             Book Enterprise Credex Consultation
           </button>
         </div>
-      )}
-          </section>
-        )}
+      </section>
+    )}
 
-      </div>
-    </main>
-  );
-}
+    {/* The Chart Component */}
+    <div className="mt-8">
+      <SavingsChart />
+    </div>
+
+  </div> {/* Closes the main wrapper div */}
+</main>
+); // Closes the return
+} // Closes the Home function
