@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { runAuditEngine, ToolInput, AuditSummary } from './pricingRules';
-import SavingsChart from '../components/SavingsChart';
 
 export default function Home() {
   const [teamSize, setTeamSize] = useState<number>(5);
@@ -138,12 +137,7 @@ export default function Home() {
 >
   Execute Real-Time Audit Assessment
 </button>
-        </section>
-        <div className="mt-8">
-          <SavingsChart />
-        </div>
-
-
+       
         {auditResult && (
           <section className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
